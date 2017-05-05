@@ -5,9 +5,7 @@ import java.sql.Timestamp;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 
-import database.GenericBean;
-
-public class EventsSpecialBean extends GenericBean<EventsSpecialBean> implements Serializable {
+public class EventsSpecialBean implements Serializable {
 
 	private static final long serialVersionUID = 8832821612763800283L;
 

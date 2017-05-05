@@ -1,8 +1,6 @@
 package beans;
 
-import database.GenericBean;
-
-public class ParamBean extends GenericBean<ParamBean> {
+public class ParamBean {
 	
 	// properties
 	private String type;

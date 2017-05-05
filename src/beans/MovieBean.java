@@ -1,12 +1,11 @@
 package beans;
 
 import java.io.Serializable;
+import java.util.List;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 
-import database.GenericBean;
-
-public class MovieBean extends GenericBean<MovieBean> implements Serializable {
+public class MovieBean implements Serializable {
 
 	private static final long serialVersionUID = -5498181428427978863L;
 
@@ -28,7 +27,7 @@ public class MovieBean extends GenericBean<MovieBean> implements Serializable {
 	@JsonProperty("ctrl")
 	private String ctrl;
 	@JsonProperty("schedules")
-	private SchedulesBean schedules;
+	private List<ScheduleBean> schedules;
 
 	// getters & setters
 	public int getId() {
@@ -87,10 +86,10 @@ public class MovieBean extends GenericBean<MovieBean> implements Serializable {
 		this.ctrl = ctrl;
 	}
 
-	public SchedulesBean getSchedules() {
+	public List<ScheduleBean> getSchedules() {
 		return schedules;
 	}
-	public void setSchedules(SchedulesBean schedules) {
+	public void setSchedules(List<ScheduleBean> schedules) {
 		this.schedules = schedules;
 	}
 }

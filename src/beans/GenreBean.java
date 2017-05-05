@@ -5,9 +5,7 @@ import java.io.Serializable;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 
-import database.GenericBean;
-
-public class GenreBean extends GenericBean<GenreBean> implements Serializable {
+public class GenreBean implements Serializable {
 	
 	private static final long serialVersionUID = -6873487089136881359L;
 

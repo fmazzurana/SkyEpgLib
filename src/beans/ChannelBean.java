@@ -4,9 +4,7 @@ import java.io.Serializable;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 
-import database.GenericBean;
-
-public class ChannelBean extends GenericBean<ChannelBean> implements Serializable {
+public class ChannelBean implements Serializable {
 
 	private static final long serialVersionUID = -8555681414646707424L;
 

@@ -1,27 +1,16 @@
 package database;
 
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.List;
 
 import beans.ChannelBean;
-import beans.ChannelsBean;
 import beans.EventsSpecialBean;
-import beans.EventsSpecialsBean;
 import beans.GenreBean;
-import beans.GenresBean;
-import beans.ListOfValue;
 import beans.MovieBean;
-import beans.MoviesBean;
 import beans.ParamBean;
 import beans.ScheduleBean;
-import beans.SchedulesBean;
-import commons.EpgException;
+import beans.StringBean;
 import skyresponses.SkyChannel;
 import skyresponses.SkyEvent;
 
@@ -43,63 +32,26 @@ public class EpgDatabase extends Database {
 	private static final String invalidValue = "The parameter is not a valid %s value: %s.";
 
 	// --------------------------------------------------------------------------------------------
-	// Variables
-	// --------------------------------------------------------------------------------------------
-	private Connection dbConn = null;
-	
-	// --------------------------------------------------------------------------------------------
-	// Construct
+	// Constructor
 	// --------------------------------------------------------------------------------------------
 	/**
-	 * Establishes a database connection
+	 * Constructor: gets the db properties.
 	 * 
-	 * @throws EpgException
+	 * @throws DBException
 	 */
-	public EpgDatabase() throws EpgException {
-		super();
-		try {
-			// TODO: get params from config file ???
-			dbConn = super.Connect("192.168.178.3", "epg", 3306, "giant", "Eir3annach");
-			//dbConn = db.Connect("fmazzurana.noip.me", "epg", 3306, "giant", "Eir3annach");
-		} catch (DBException e) {
-			throw new EpgException(e.getMessage());
-		}
+	public EpgDatabase(String propFile) throws DBException {
+		super(propFile);
 	}
 
 	// --------------------------------------------------------------------------------------------
 	// Publics
 	// --------------------------------------------------------------------------------------------
-	/**
-	 * Closes the DB connection
-	 * 
-	 * @throws EpgException
-	 */
-	public void Close() throws EpgException {
-		if (dbConn != null) {
-			try {
-				super.Disconnect(dbConn);
-			} catch (DBException e) {
-				throw new EpgException(e.getMessage());
-			}
-		}
+	public void archiver() throws DBException {
+		super.callProcedure("ut_archiver");
 	}
 	
-	public void archiver() throws EpgException {
-		try {
-			CallableStatement stmt = dbConn.prepareCall("{ call ut_archiver() }");
-			stmt.executeQuery();
-		} catch (SQLException e) {
-			throw new EpgException(e.getMessage());
-		}
-	}
-	
-	public void fixer() throws EpgException {
-		try {
-			CallableStatement stmt = dbConn.prepareCall("{ call ut_fixer() }");
-			stmt.executeQuery();
-		} catch (SQLException e) {
-			throw new EpgException(e.getMessage());
-		}
+	public void fixer() throws DBException {
+		super.callProcedure("ut_fixer");
 	}
 	
 	/*
@@ -114,114 +66,69 @@ public class EpgDatabase extends Database {
 	// --------------------------------------------------------------------------------------------
 	// Methods on CHANNELS
 	// --------------------------------------------------------------------------------------------
-	public ChannelsBean channelsList(int genreId) throws EpgException {
-		ChannelsBean channels = new ChannelsBean();
-		try {
-			CallableStatement stmt = dbConn.prepareCall("{ call p_channelsList(?) }");
-			stmt.setInt(1, genreId);
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next())
-				channels.add(ChannelBean.fromResultSet(rs, ChannelBean.class));
-			return channels;
-		} catch (SQLException | DBException e) {
-			throw new EpgException(e.getMessage());
-		}
+	public List<ChannelBean> channelsList(int genreId) throws DBException {
+		DbParamsList params = new DbParamsList();
+		params.add(genreId);
+		return super.callProcedure("p_channelsList", params, ChannelBean.class);
 	}
 	
-	public void channelsInsertUpdate(int idGenre, SkyChannel chn, byte[] logo) throws EpgException {
-		try {
-			CallableStatement stmt = dbConn.prepareCall("{ call p_channelsInsertUpdate(?,?,?,?,?,?) }");
-			stmt.setInt(1, idGenre);
-			stmt.setInt(2, chn.getId());
-			stmt.setString(3, chn.getName());
-			stmt.setInt(4, chn.getNumber());
-			stmt.setInt(5, chn.getService());
-			stmt.setBytes(6, logo);
-			stmt.executeQuery();
-		} catch (SQLException e) {
-			throw new EpgException(e.getMessage());
-		}
+	public void channelsInsertUpdate(int idGenre, SkyChannel chn, byte[] logo) throws DBException {
+		DbParamsList params = new DbParamsList();
+		params.add(idGenre);
+		params.add(chn.getId());
+		params.add(chn.getName());
+		params.add(chn.getNumber());
+		params.add(chn.getService());
+		params.add(logo);
+		super.callProcedure("p_channelsInsertUpdate", params);
 	}
 
-	public void channelsUpdateJson(int chnId, int day, String json) throws EpgException {
-		try {
-			CallableStatement stmt = dbConn.prepareCall("{ call p_channelsUpdateJson(?,?,?) }");
-			stmt.setInt(1, chnId);
-			stmt.setInt(2, day);
-			stmt.setString(3, json);
-			stmt.executeQuery();
-		} catch (SQLException e) {
-			throw new EpgException(e.getMessage());
-		}
+	public void channelsUpdateJson(int chnId, int day, String json) throws DBException {
+		DbParamsList params = new DbParamsList();
+		params.add(chnId);
+		params.add(day);
+		params.add(json);
+		super.callProcedure("p_channelsUpdateJson", params);
 	}
 
 	// --------------------------------------------------------------------------------------------
 	// Methods on CONTROLS
 	// --------------------------------------------------------------------------------------------
-	public ListOfValue controlsList() throws EpgException {
-		ListOfValue controls = new ListOfValue();
-		try {
-			CallableStatement stmt = dbConn.prepareCall("{ call p_controlsList() }");
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next())
-				controls.add(rs.getString(1));
-			return controls;
-		} catch (SQLException e) {
-			throw new EpgException(e.getMessage());
-		}
+	public List<String> controlsList() throws DBException {
+		return super.callProcedure("p_controlsList", String.class);
 	}
 
 	// --------------------------------------------------------------------------------------------
 	// Methods on EVENTS
 	// --------------------------------------------------------------------------------------------
-	public EventsSpecialsBean eventsListSpecials() throws EpgException {
-		EventsSpecialsBean specials = new EventsSpecialsBean();
-		try {
-			CallableStatement stmt = dbConn.prepareCall("{ call p_eventsListSpecials() }");
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next())
-				specials.add(EventsSpecialBean.fromResultSet(rs, EventsSpecialBean.class));
-			return specials;
-		} catch (SQLException | DBException e) {
-			throw new EpgException(e.getMessage());
-		}
+	public List<EventsSpecialBean> eventsListSpecials() throws DBException {
+		return super.callProcedure("p_eventsListSpecials", EventsSpecialBean.class);
 	}
 
-	public MoviesBean eventsListMovies(String genre) throws EpgException {
-		MoviesBean movies = new MoviesBean();
-		try {
-			CallableStatement stmt = dbConn.prepareCall("{ call p_eventsListMovies(?) }");
-			stmt.setString(1, genre);
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next()) {
-				MovieBean movie = MovieBean.fromResultSet(rs, MovieBean.class);
-				SchedulesBean schedules = schedulesListMovie(movie.getId());
-				movie.setSchedules(schedules);
-				movies.add(movie);
-			}
-			return movies;
-		} catch (SQLException | DBException e) {
-			throw new EpgException(e.getMessage());
+	public List<MovieBean> eventsListMovies(String genre) throws DBException {
+		DbParamsList params = new DbParamsList();
+		params.add(genre);
+		List<MovieBean> movies = super.callProcedure("p_eventsListMovies", params, MovieBean.class);
+		for (MovieBean movie : movies) {
+			List<ScheduleBean> schedules = schedulesListMovie(movie.getId());
+			movie.setSchedules(schedules);
 		}
+		return movies;
 	}
 
-	public void eventsInsert(SkyEvent event, int chnId, LocalDateTime day, String fullDescr) throws EpgException {
+	public void eventsInsert(SkyEvent event, int chnId, LocalDateTime day, String fullDescr) throws DBException {
 		// date
-		try {
-			CallableStatement stmt = dbConn.prepareCall("{ call p_eventsInsert(?,?,?,?,?,?,?,?,?) }");
-			stmt.setInt(1, event.getId());
-			stmt.setInt(2, event.getPid());
-			stmt.setInt(3, chnId);
-			stmt.setTimestamp(4, Timestamp.valueOf(day));
-			stmt.setInt(5, event.getDur());
-			stmt.setString(6, event.getTitle());
-			stmt.setString(7, event.getGenre());
-			stmt.setString(8, event.getSubgenre());
-			stmt.setString(9, fullDescr);
-			stmt.executeQuery();
-		} catch (SQLException e) {
-			throw new EpgException(e.getMessage());
-		}
+		DbParamsList params = new DbParamsList();
+		params.add(event.getId());
+		params.add(event.getPid());
+		params.add(chnId);
+		params.add(Timestamp.valueOf(day));
+		params.add(event.getDur());
+		params.add(event.getTitle());
+		params.add(event.getGenre());
+		params.add(event.getSubgenre());
+		params.add(fullDescr);
+		super.callProcedure("p_eventsInsert", params);
 	}
 
 	// --------------------------------------------------------------------------------------------
@@ -233,116 +140,74 @@ public class EpgDatabase extends Database {
 	 * @param enabled Indicates the genre status
 	 * @param id Genre id to be searched (0 = all)
 	 * @return A list of <b>Genre</b>. The list may be null if no genres are found.
-	 * @throws EpgException
+	 * @throws DBException
 	 */
-	public GenresBean genresList(GenresEnabled enabled, int id) throws EpgException {
-		GenresBean genres = new GenresBean();
-		try {
-			CallableStatement stmt = dbConn.prepareCall("{ call p_genresList(?,?) }");
-			stmt.setInt(1, enabled.ordinal());
-			stmt.setInt(2, id);
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next())
-				genres.add(GenreBean.fromResultSet(rs, GenreBean.class));
-			return genres;
-		} catch (SQLException | DBException e) {
-			throw new EpgException(e.getMessage());
-		}
+	public List<GenreBean> genresList(GenresEnabled enabled, int id) throws DBException {
+		DbParamsList params = new DbParamsList();
+		params.add(enabled.ordinal());
+		params.add(id);
+		return super.callProcedure("p_genresList", params, GenreBean.class);
 	}
 	
-	public void genresUpdateJson(int id, String json) throws EpgException {
-		try {
-			CallableStatement stmt = dbConn.prepareCall("{ call p_genresUpdateJson(?,?) }");
-			stmt.setInt(1, id);
-			stmt.setString(2, json);
-			stmt.executeQuery();
-		} catch (SQLException e) {
-			throw new EpgException(e.getMessage());
-		}
+	public void genresUpdateJson(int id, String json) throws DBException {
+		DbParamsList params = new DbParamsList();
+		params.add(id);
+		params.add(json);
+		super.callProcedure("p_genresUpdateJson", params);
 	}
 	
 	// --------------------------------------------------------------------------------------------
 	// Methods on LOG
 	// --------------------------------------------------------------------------------------------
-	public void logAdd(String process, List<String> lines) throws EpgException {
+	public void logAdd(String process, List<String> lines) throws DBException {
 		for (String line : lines)
 			logAdd(process, line);
 	}
-	public void logAdd(String process, String line) throws EpgException {
-		try {
-			CallableStatement stmt = dbConn.prepareCall("{ call p_logAdd(?,?) }");
-			stmt.setString(1, process);
-			stmt.setString(2, line);
-			stmt.executeQuery();
-		} catch (SQLException e) {
-			throw new EpgException(e.getMessage());
-		}
+	public void logAdd(String process, String line) throws DBException {
+		DbParamsList params = new DbParamsList();
+		params.add(process);
+		params.add(line);
+		super.callProcedure("p_logAdd", params);
 	}
 
 	// --------------------------------------------------------------------------------------------
 	// Methods on MOVIES
 	// --------------------------------------------------------------------------------------------
-	public MoviesBean moviesList(String title, String genre, String fulldescr, String special, String ctrl) throws EpgException {
-		MoviesBean movies = new MoviesBean();
-		try {
-			CallableStatement stmt = dbConn.prepareCall("{ call p_moviesList(?,?,?,?,?) }");
-			stmt.setString(1, title);
-			stmt.setString(2, genre);
-			stmt.setString(3, fulldescr);
-			stmt.setString(4, special);
-			stmt.setString(5, ctrl);
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next())
-				movies.add(MovieBean.fromResultSet(rs, MovieBean.class));
-			return movies;
-		} catch (SQLException | DBException e) {
-			throw new EpgException(e.getMessage());
-		}
+	public List<MovieBean> moviesList(String title, String genre, String fulldescr, String special, String ctrl) throws DBException {
+		DbParamsList params = new DbParamsList();
+		params.add(title);
+		params.add(genre);
+		params.add(fulldescr);
+		params.add(special);
+		params.add(ctrl);
+		return super.callProcedure("p_moviesList", params, MovieBean.class);
 	}
 
-	public ListOfValue moviesListGenres() throws EpgException {
-		ListOfValue genres = new ListOfValue();
-		try {
-			CallableStatement stmt = dbConn.prepareCall("{ call p_moviesListGenres() }");
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next())
-				genres.add(rs.getString(1));
-			return genres;
-		} catch (SQLException e) {
-			throw new EpgException(e.getMessage());
-		}
+	public List<StringBean> moviesListGenres() throws DBException {
+		return super.callProcedure("p_moviesListGenres", StringBean.class);
 	}
 
-	public void moviesUpdateCtrl(int movieId, String ctrl) throws EpgException {
-		try {
-			CallableStatement stmt = dbConn.prepareCall("{ call p_moviesUpdateCtrl(?,?) }");
-			stmt.setInt(1, movieId);
-			stmt.setString(2, ctrl);
-			stmt.executeQuery();
-		} catch (SQLException e) {
-			throw new EpgException(e.getMessage());
-		}
+	public void moviesUpdateCtrl(int movieId, String ctrl) throws DBException {
+		DbParamsList params = new DbParamsList();
+		params.add(movieId);
+		params.add(ctrl);
+		super.callProcedure("p_moviesUpdateCtrl", params);
 	}
 
 	// --------------------------------------------------------------------------------------------
 	// Methods on PARAMS
 	// --------------------------------------------------------------------------------------------
-	private String paramRead(String name, String type) throws EpgException {
-		try {
-			CallableStatement stmt = dbConn.prepareCall("{ call p_paramRead(?) }");
-			stmt.setString(1, name);
-			ResultSet rs = stmt.executeQuery();
-			if (rs.next()) {
-				ParamBean param = ParamBean.fromResultSet(rs, ParamBean.class);
-				if (param.getType().equalsIgnoreCase(type))
-					return param.getValue();
-				else
-					throw new EpgException(String.format("The parameter is not of type %s.", type));
-			} else
-				throw new EpgException(String.format("Parameter not found: %s", name));
-		} catch (SQLException | DBException e) {
-			throw new EpgException(e.getMessage());
-		}
+	private String paramRead(String name, String type) throws DBException {
+		DbParamsList params = new DbParamsList();
+		params.add(name);
+		List<ParamBean> param = super.callProcedure("p_paramRead", params, ParamBean.class);
+		if (param != null && param.size() == 1) {
+			if (param.get(0).getType().equalsIgnoreCase(type))
+				return param.get(0).getValue();
+			else
+				throw new DBException(String.format("The parameter is not of type %s.", type));
+		} else
+			throw new DBException(String.format("Parameter not found: %s", name));
 	}
 	
 	/**
@@ -350,28 +215,28 @@ public class EpgDatabase extends Database {
 	 *  
 	 * @param name Name of the parameter
 	 * @return Parameter's value
-	 * @throws EpgException
+	 * @throws DBException
 	 */
-	public String getParamAsString(String name) throws EpgException {
+	public String getParamAsString(String name) throws DBException {
 		return paramRead(name, typeString);
 	}
-	public int getParamAsInteger(String name) throws EpgException {
+	public int getParamAsInteger(String name) throws DBException {
 		String value = paramRead(name, typeInteger);
 		try {
 			return Integer.parseInt(value);
 		} catch (NumberFormatException e) {
-			throw new EpgException(String.format(invalidValue, typeInteger, value));
+			throw new DBException(String.format(invalidValue, typeInteger, value));
 		}
 	}
-	public double getParamAsDouble(String name) throws EpgException {
+	public double getParamAsDouble(String name) throws DBException {
 		String value = paramRead(name, typeDouble);
 		try {
 			return Double.parseDouble(value);
 		} catch (NumberFormatException e) {
-			throw new EpgException(String.format(invalidValue, typeDouble, value));
+			throw new DBException(String.format(invalidValue, typeDouble, value));
 		}
 	}
-	public Boolean getParamAsBoolean(String name) throws EpgException {
+	public Boolean getParamAsBoolean(String name) throws DBException {
 		String value = paramRead(name, typeBoolean);
 		return Boolean.parseBoolean(value);
 	}
@@ -379,49 +244,26 @@ public class EpgDatabase extends Database {
 	// --------------------------------------------------------------------------------------------
 	// Methods on SCHEDULES
 	// --------------------------------------------------------------------------------------------
-	public SchedulesBean schedulesListMovie(int movieId) throws EpgException {
-		SchedulesBean schedules = new SchedulesBean();
-		try {
-			CallableStatement stmt = dbConn.prepareCall("{ call p_schedulesListMovie(?) }");
-			stmt.setInt(1, movieId);
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next())
-				schedules.add(ScheduleBean.fromResultSet(rs, ScheduleBean.class));
-			return schedules;
-		} catch (SQLException | DBException e) {
-			throw new EpgException(e.getMessage());
-		}
+	public List<ScheduleBean> schedulesListMovie(int movieId) throws DBException {
+		DbParamsList params = new DbParamsList();
+		params.add(movieId);
+		return super.callProcedure("p_schedulesListMovie", params, ScheduleBean.class);
 	}
 
 	// --------------------------------------------------------------------------------------------
 	// Methods on SKIPCHANNELS
 	// --------------------------------------------------------------------------------------------
-	public Boolean skipchannelsCheck(int number, String name) throws EpgException {
-		try {
-			CallableStatement stmt = dbConn.prepareCall("{? = call f_skipchannelsCheck(?,?) }");
-			stmt.registerOutParameter(1, Types.INTEGER);
-			stmt.setInt(2, number);
-			stmt.setString(3, name);
-			stmt.execute();
-			return stmt.getInt(1) > 0;
-		} catch (SQLException e) {
-			throw new EpgException(e.getMessage());
-		}
+	public Boolean skipchannelsCheck(int number, String name) throws DBException {
+		DbParamsList params = new DbParamsList();
+		params.add(number);
+		params.add(name);
+		return super.execFunctionRetInt("f_skipchannelsCheck", params) > 0;
 	}
 
 	// --------------------------------------------------------------------------------------------
 	// Methods on SPECIALS
 	// --------------------------------------------------------------------------------------------
-	public ListOfValue specialsListAttributes() throws EpgException {
-		ListOfValue specialLabels = new ListOfValue();
-		try {
-			CallableStatement stmt = dbConn.prepareCall("{ call p_specialsListAttributes() }");
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next()) 
-				specialLabels.add(rs.getString(1));
-			return specialLabels;
-		} catch (SQLException e) {
-			throw new EpgException(e.getMessage());
-		}
+	public List<String> specialsListAttributes() throws DBException {
+		return super.callProcedure("p_specialsListAttributes", null, String.class);
 	}
 }
