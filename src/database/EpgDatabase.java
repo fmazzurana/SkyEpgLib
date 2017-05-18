@@ -15,7 +15,7 @@ import skyresponses.SkyChannel;
 import skyresponses.SkyEvent;
 
 
-public class EpgDatabase extends Database {
+public class EpgDatabase extends DbMySql {
 
 	// --------------------------------------------------------------------------------------------
 	// Types
@@ -39,18 +39,18 @@ public class EpgDatabase extends Database {
 	 * 
 	 * @throws DBException
 	 */
-	public EpgDatabase(String propFile) throws DBException {
+	public EpgDatabase(String propFile) throws DbException {
 		super(propFile);
 	}
 
 	// --------------------------------------------------------------------------------------------
 	// Publics
 	// --------------------------------------------------------------------------------------------
-	public void archiver() throws DBException {
+	public void archiver() throws DbException {
 		super.callProcedure("ut_archiver");
 	}
 	
-	public void fixer() throws DBException {
+	public void fixer() throws DbException {
 		super.callProcedure("ut_fixer");
 	}
 	
@@ -66,13 +66,13 @@ public class EpgDatabase extends Database {
 	// --------------------------------------------------------------------------------------------
 	// Methods on CHANNELS
 	// --------------------------------------------------------------------------------------------
-	public List<ChannelBean> channelsList(int genreId) throws DBException {
+	public List<ChannelBean> channelsList(int genreId) throws DbException {
 		DbParamsList params = new DbParamsList();
 		params.add(genreId);
 		return super.callProcedure("p_channelsList", params, ChannelBean.class);
 	}
 	
-	public void channelsInsertUpdate(int idGenre, SkyChannel chn, byte[] logo) throws DBException {
+	public void channelsInsertUpdate(int idGenre, SkyChannel chn, byte[] logo) throws DbException {
 		DbParamsList params = new DbParamsList();
 		params.add(idGenre);
 		params.add(chn.getId());
@@ -83,7 +83,7 @@ public class EpgDatabase extends Database {
 		super.callProcedure("p_channelsInsertUpdate", params);
 	}
 
-	public void channelsUpdateJson(int chnId, int day, String json) throws DBException {
+	public void channelsUpdateJson(int chnId, int day, String json) throws DbException {
 		DbParamsList params = new DbParamsList();
 		params.add(chnId);
 		params.add(day);
@@ -94,18 +94,18 @@ public class EpgDatabase extends Database {
 	// --------------------------------------------------------------------------------------------
 	// Methods on CONTROLS
 	// --------------------------------------------------------------------------------------------
-	public List<String> controlsList() throws DBException {
+	public List<String> controlsList() throws DbException {
 		return super.callProcedure("p_controlsList", String.class);
 	}
 
 	// --------------------------------------------------------------------------------------------
 	// Methods on EVENTS
 	// --------------------------------------------------------------------------------------------
-	public List<EventsSpecialBean> eventsListSpecials() throws DBException {
+	public List<EventsSpecialBean> eventsListSpecials() throws DbException {
 		return super.callProcedure("p_eventsListSpecials", EventsSpecialBean.class);
 	}
 
-	public List<MovieBean> eventsListMovies(String genre) throws DBException {
+	public List<MovieBean> eventsListMovies(String genre) throws DbException {
 		DbParamsList params = new DbParamsList();
 		params.add(genre);
 		List<MovieBean> movies = super.callProcedure("p_eventsListMovies", params, MovieBean.class);
@@ -116,7 +116,7 @@ public class EpgDatabase extends Database {
 		return movies;
 	}
 
-	public void eventsInsert(SkyEvent event, int chnId, LocalDateTime day, String fullDescr) throws DBException {
+	public void eventsInsert(SkyEvent event, int chnId, LocalDateTime day, String fullDescr) throws DbException {
 		// date
 		DbParamsList params = new DbParamsList();
 		params.add(event.getId());
@@ -142,14 +142,14 @@ public class EpgDatabase extends Database {
 	 * @return A list of <b>Genre</b>. The list may be null if no genres are found.
 	 * @throws DBException
 	 */
-	public List<GenreBean> genresList(GenresEnabled enabled, int id) throws DBException {
+	public List<GenreBean> genresList(GenresEnabled enabled, int id) throws DbException {
 		DbParamsList params = new DbParamsList();
 		params.add(enabled.ordinal());
 		params.add(id);
 		return super.callProcedure("p_genresList", params, GenreBean.class);
 	}
 	
-	public void genresUpdateJson(int id, String json) throws DBException {
+	public void genresUpdateJson(int id, String json) throws DbException {
 		DbParamsList params = new DbParamsList();
 		params.add(id);
 		params.add(json);
@@ -159,11 +159,11 @@ public class EpgDatabase extends Database {
 	// --------------------------------------------------------------------------------------------
 	// Methods on LOG
 	// --------------------------------------------------------------------------------------------
-	public void logAdd(String process, List<String> lines) throws DBException {
+	public void logAdd(String process, List<String> lines) throws DbException {
 		for (String line : lines)
 			logAdd(process, line);
 	}
-	public void logAdd(String process, String line) throws DBException {
+	public void logAdd(String process, String line) throws DbException {
 		DbParamsList params = new DbParamsList();
 		params.add(process);
 		params.add(line);
@@ -173,7 +173,7 @@ public class EpgDatabase extends Database {
 	// --------------------------------------------------------------------------------------------
 	// Methods on MOVIES
 	// --------------------------------------------------------------------------------------------
-	public List<MovieBean> moviesList(String title, String genre, String fulldescr, String special, String ctrl) throws DBException {
+	public List<MovieBean> moviesList(String title, String genre, String fulldescr, String special, String ctrl) throws DbException {
 		DbParamsList params = new DbParamsList();
 		params.add(title);
 		params.add(genre);
@@ -183,11 +183,11 @@ public class EpgDatabase extends Database {
 		return super.callProcedure("p_moviesList", params, MovieBean.class);
 	}
 
-	public List<StringBean> moviesListGenres() throws DBException {
+	public List<StringBean> moviesListGenres() throws DbException {
 		return super.callProcedure("p_moviesListGenres", StringBean.class);
 	}
 
-	public void moviesUpdateCtrl(int movieId, String ctrl) throws DBException {
+	public void moviesUpdateCtrl(int movieId, String ctrl) throws DbException {
 		DbParamsList params = new DbParamsList();
 		params.add(movieId);
 		params.add(ctrl);
@@ -197,7 +197,7 @@ public class EpgDatabase extends Database {
 	// --------------------------------------------------------------------------------------------
 	// Methods on PARAMS
 	// --------------------------------------------------------------------------------------------
-	private String paramRead(String name, String type) throws DBException {
+	private String paramRead(String name, String type) throws DbException {
 		DbParamsList params = new DbParamsList();
 		params.add(name);
 		List<ParamBean> param = super.callProcedure("p_paramRead", params, ParamBean.class);
@@ -205,9 +205,9 @@ public class EpgDatabase extends Database {
 			if (param.get(0).getType().equalsIgnoreCase(type))
 				return param.get(0).getValue();
 			else
-				throw new DBException(String.format("The parameter is not of type %s.", type));
+				throw new DbException(String.format("The parameter is not of type %s.", type));
 		} else
-			throw new DBException(String.format("Parameter not found: %s", name));
+			throw new DbException(String.format("Parameter not found: %s", name));
 	}
 	
 	/**
@@ -217,26 +217,26 @@ public class EpgDatabase extends Database {
 	 * @return Parameter's value
 	 * @throws DBException
 	 */
-	public String getParamAsString(String name) throws DBException {
+	public String getParamAsString(String name) throws DbException {
 		return paramRead(name, typeString);
 	}
-	public int getParamAsInteger(String name) throws DBException {
+	public int getParamAsInteger(String name) throws DbException {
 		String value = paramRead(name, typeInteger);
 		try {
 			return Integer.parseInt(value);
 		} catch (NumberFormatException e) {
-			throw new DBException(String.format(invalidValue, typeInteger, value));
+			throw new DbException(String.format(invalidValue, typeInteger, value));
 		}
 	}
-	public double getParamAsDouble(String name) throws DBException {
+	public double getParamAsDouble(String name) throws DbException {
 		String value = paramRead(name, typeDouble);
 		try {
 			return Double.parseDouble(value);
 		} catch (NumberFormatException e) {
-			throw new DBException(String.format(invalidValue, typeDouble, value));
+			throw new DbException(String.format(invalidValue, typeDouble, value));
 		}
 	}
-	public Boolean getParamAsBoolean(String name) throws DBException {
+	public Boolean getParamAsBoolean(String name) throws DbException {
 		String value = paramRead(name, typeBoolean);
 		return Boolean.parseBoolean(value);
 	}
@@ -244,7 +244,7 @@ public class EpgDatabase extends Database {
 	// --------------------------------------------------------------------------------------------
 	// Methods on SCHEDULES
 	// --------------------------------------------------------------------------------------------
-	public List<ScheduleBean> schedulesListMovie(int movieId) throws DBException {
+	public List<ScheduleBean> schedulesListMovie(int movieId) throws DbException {
 		DbParamsList params = new DbParamsList();
 		params.add(movieId);
 		return super.callProcedure("p_schedulesListMovie", params, ScheduleBean.class);
@@ -253,7 +253,7 @@ public class EpgDatabase extends Database {
 	// --------------------------------------------------------------------------------------------
 	// Methods on SKIPCHANNELS
 	// --------------------------------------------------------------------------------------------
-	public Boolean skipchannelsCheck(int number, String name) throws DBException {
+	public Boolean skipchannelsCheck(int number, String name) throws DbException {
 		DbParamsList params = new DbParamsList();
 		params.add(number);
 		params.add(name);
@@ -263,7 +263,7 @@ public class EpgDatabase extends Database {
 	// --------------------------------------------------------------------------------------------
 	// Methods on SPECIALS
 	// --------------------------------------------------------------------------------------------
-	public List<String> specialsListAttributes() throws DBException {
+	public List<String> specialsListAttributes() throws DbException {
 		return super.callProcedure("p_specialsListAttributes", null, String.class);
 	}
 }
