@@ -8,7 +8,6 @@ import beans.ChannelBean;
 import beans.EventsSpecialBean;
 import beans.GenreBean;
 import beans.MovieBean;
-import beans.ParamBean;
 import beans.ScheduleBean;
 import beans.StringBean;
 import skyresponses.SkyChannel;
@@ -23,24 +22,20 @@ public class EpgDatabase extends DbMySql {
 	public static enum GenresEnabled  { NO /* 0 */, YES /* 1 */, ALL /* 2 */ };
 	
 	// --------------------------------------------------------------------------------------------
-	// Constants
-	// --------------------------------------------------------------------------------------------
-	private static final String typeString  = "String";
-	private static final String typeInteger = "Integer";
-	private static final String typeDouble  = "Double";
-	private static final String typeBoolean = "Boolean";
-	private static final String invalidValue = "The parameter is not a valid %s value: %s.";
-
-	// --------------------------------------------------------------------------------------------
 	// Constructor
 	// --------------------------------------------------------------------------------------------
 	/**
-	 * Constructor: gets the db properties.
+	 * Constructor
 	 * 
-	 * @throws DBException
+	 * @param dbname
+	 * @throws DbException
 	 */
-	public EpgDatabase(String propFile) throws DbException {
-		super(propFile);
+	public EpgDatabase() throws DbException {
+		super("epg");
+	}
+
+	public EpgDatabase(String url, int port, String usr, String pwd, String extras) throws DbException {
+		super("epg", url, port, usr, pwd, extras);
 	}
 
 	// --------------------------------------------------------------------------------------------
@@ -197,49 +192,6 @@ public class EpgDatabase extends DbMySql {
 	// --------------------------------------------------------------------------------------------
 	// Methods on PARAMS
 	// --------------------------------------------------------------------------------------------
-	private String paramRead(String name, String type) throws DbException {
-		DbParamsList params = new DbParamsList();
-		params.add(name);
-		List<ParamBean> param = super.callProcedure("p_paramRead", params, ParamBean.class);
-		if (param != null && param.size() == 1) {
-			if (param.get(0).getType().equalsIgnoreCase(type))
-				return param.get(0).getValue();
-			else
-				throw new DbException(String.format("The parameter is not of type %s.", type));
-		} else
-			throw new DbException(String.format("Parameter not found: %s", name));
-	}
-	
-	/**
-	 * These methods get a parameter from the DB
-	 *  
-	 * @param name Name of the parameter
-	 * @return Parameter's value
-	 * @throws DBException
-	 */
-	public String getParamAsString(String name) throws DbException {
-		return paramRead(name, typeString);
-	}
-	public int getParamAsInteger(String name) throws DbException {
-		String value = paramRead(name, typeInteger);
-		try {
-			return Integer.parseInt(value);
-		} catch (NumberFormatException e) {
-			throw new DbException(String.format(invalidValue, typeInteger, value));
-		}
-	}
-	public double getParamAsDouble(String name) throws DbException {
-		String value = paramRead(name, typeDouble);
-		try {
-			return Double.parseDouble(value);
-		} catch (NumberFormatException e) {
-			throw new DbException(String.format(invalidValue, typeDouble, value));
-		}
-	}
-	public Boolean getParamAsBoolean(String name) throws DbException {
-		String value = paramRead(name, typeBoolean);
-		return Boolean.parseBoolean(value);
-	}
 
 	// --------------------------------------------------------------------------------------------
 	// Methods on SCHEDULES
